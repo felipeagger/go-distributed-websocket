@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+
+    cache:
+        image: redis:latest
+        container_name: redis
+        ports:
+            - 6379:6379
+
+    websocket:
+        container_name: ws-api
+        image: dist-websocket:latest
+        links:
+            - cache:cache
+        command: /app/websocket
+        environment:
+            - PORT=8008
+            - CACHE_HOST=cache
+        ports:
+            - 8008:8008
+
+    consumer:
+        #container_name: ws-consumer
+        image: dist-websocket:latest
+        links:
+            - cache:cache
+        command: /app/consumer
+        environment:
+            - CACHE_HOST=cache
