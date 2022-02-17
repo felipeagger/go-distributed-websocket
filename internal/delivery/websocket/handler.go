@@ -28,7 +28,7 @@ type Handler struct {
 // SocketHandler echos websocket messages back to the client.
 func (h *Handler) SocketHandler(w http.ResponseWriter, r *http.Request) {
 	origin := r.URL.Query().Get("origin")
-	userId := r.URL.Query().Get("userId")
+	userID := r.URL.Query().Get("userId")
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	defer conn.Close()
@@ -38,7 +38,7 @@ func (h *Handler) SocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go h.subscribe(r.Context(), conn, origin, userId)
+	go h.subscribe(r.Context(), conn, origin, userID)
 
 	for {
 		messageType, data, err := conn.ReadMessage()
@@ -47,18 +47,12 @@ func (h *Handler) SocketHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var msg entity.Message
-		if data != nil && string(data) != "" {
-			err = json.Unmarshal(data, &msg)
-			if err != nil {
-				errMsg := fmt.Sprintf("\nunmarshal.ReadMessage (Invalid Payload): %v", err)
-				sendResponse(conn, messageType, errMsg)
-				continue
-			}
+		msg, err := validateSchema(userID, h.Hostname, data)
+		if err != nil {
+			errMsg := fmt.Sprintf("\nunmarshal.ReadMessage (Invalid Payload): %v", err)
+			sendResponse(conn, messageType, errMsg)
+			continue
 		}
-
-		msg.UserID = userId
-		msg.ReceivedBy = h.Hostname
 
 		err = h.publish(r.Context(), msg)
 		if err != nil {
@@ -68,6 +62,18 @@ func (h *Handler) SocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Host: %v - PublishMessage: %v", h.Hostname, msg)
 	}
+}
+
+func validateSchema(userID, hostname string, data []byte) (msg entity.Message, err error) {
+
+	if data != nil && string(data) != "" {
+		err = json.Unmarshal(data, &msg)
+	}
+
+	msg.UserID = userID
+	msg.ReceivedBy = hostname
+
+	return msg, err
 }
 
 func sendResponse(conn *websocket.Conn, msgType int, message string) {
