@@ -91,18 +91,16 @@ func (h *Handler) publish(ctx context.Context, msg entity.Message) error {
 }
 
 func (h *Handler) subscribe(ctx context.Context, conn *websocket.Conn, origin, userID string) {
+	defer fmt.Println("exiting goroutine subscribe")
 	subscriber := h.RedisClient.Subscribe(ctx, utils.GetTopicName(userID, origin))
+
+	messagesChan := subscriber.Channel()
 
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("subscribe loop cancelled")
-		default:
-			msg, err := subscriber.ReceiveMessage(ctx)
-			if err != nil {
-				panic(err)
-			}
-
+			return
+		case msg := <-messagesChan:
 			sendResponse(conn, 1, msg.Payload)
 		}
 	}
