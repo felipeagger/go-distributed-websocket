@@ -10,7 +10,7 @@ WORKDIR $GOPATH/src
 
 COPY . $GOPATH/src
 
-RUN GOOS=linux go build -ldflags '-linkmode=external' -o /go/bin/websocket cmd/websocket/main.go
+RUN GOOS=linux go build -ldflags '-linkmode=external' -o /go/bin/websocket cmd/api/main.go
 RUN GOOS=linux go build -ldflags '-linkmode=external' -o /go/bin/consumer cmd/consumer/main.go
 
 FROM alpine:3.13

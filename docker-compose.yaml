@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
 
@@ -10,7 +10,7 @@ services:
 
     websocket:
         container_name: ws-api
-        image: dist-websocket:latest
+        build: '.'
         links:
             - cache:cache
         command: /app/websocket
@@ -21,10 +21,15 @@ services:
             - 8008:8008
 
     consumer:
-        #container_name: ws-consumer
-        image: dist-websocket:latest
+        build: '.'
         links:
             - cache:cache
         command: /app/consumer
         environment:
             - CACHE_HOST=cache
+
+    redis-insights:
+        container_name: redis-insights
+        image: redislabs/redisinsight
+        ports: 
+            - "8082:8001"

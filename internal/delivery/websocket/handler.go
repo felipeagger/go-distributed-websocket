@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/felipeagger/go-distributed-websocket/internal/entity"
 	"github.com/felipeagger/go-distributed-websocket/pkg/utils"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
-	"log"
-	"net/http"
 )
 
 // upgrader holds the websocket connection.
@@ -19,8 +20,8 @@ var upgrader = websocket.Upgrader{
 }
 
 type Handler struct {
-	Hostname string
-	StreamName string
+	Hostname    string
+	StreamName  string
 	RedisClient *redis.Client
 }
 
@@ -91,8 +92,12 @@ func (h *Handler) publish(ctx context.Context, msg entity.Message) error {
 }
 
 func (h *Handler) subscribe(ctx context.Context, conn *websocket.Conn, origin, userID string) {
-	defer fmt.Println("exiting goroutine subscribe")
 	subscriber := h.RedisClient.Subscribe(ctx, utils.GetTopicName(userID, origin))
+
+	defer func() {
+		subscriber.Unsubscribe(ctx, utils.GetTopicName(userID, origin))
+		fmt.Println("exiting goroutine subscribe")
+	}()
 
 	messagesChan := subscriber.Channel()
 
