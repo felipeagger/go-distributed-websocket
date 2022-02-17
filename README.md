@@ -27,3 +27,7 @@ Send:
 ```
 {"userId": "9e67a109-5c55-4e0b-8d5f-31b06ed4bb38", "origin": "web", "data": "Hello World"}
 ```
+
+## Web Client
+
+![Flow](/assets/web-client.png)

@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/felipeagger/go-distributed-websocket/internal/entity"
 	"github.com/felipeagger/go-distributed-websocket/pkg/cache"
 	"github.com/go-redis/redis/v8"
-	"log"
 )
 
 func (c *Consumer) processMessage(ctx context.Context, message redis.XMessage) {
@@ -33,5 +34,8 @@ func (c *Consumer) processMessage(ctx context.Context, message redis.XMessage) {
 	err := cache.Publish(ctx, c.cacheClient, response)
 	if err != nil {
 		fmt.Printf("\nprocessMessage.Error: %v\n", err)
+		return
 	}
+
+	c.cacheClient.XAck(ctx, c.streamName, c.consumerGroup, message.ID)
 }
